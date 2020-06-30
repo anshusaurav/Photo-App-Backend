@@ -74,11 +74,19 @@ UserSchema.methods.toAuthJSON = function () {
   return {
     username: this.username,
     email: this.email,
-    fullname: this.fullname,
+    fullname: this.fullname
+    .toLowerCase()
+    .split(' ')
+    .map(function(word) {
+        return word[0].toUpperCase() + word.substr(1);
+    })
+    .join(' '),
     token: this.generateJWT(),
     bio: this.bio,
     image: this.image,
-    numfollowing: this.following.length
+    numfollowing: this.following.length,
+    numFollowers: this.follower.length,
+    numPosts: this.imageposts.length
   }
 }
 
