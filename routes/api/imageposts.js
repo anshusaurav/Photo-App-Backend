@@ -302,11 +302,43 @@ router.delete('/:imagepost/favorite', auth.required, function (req, res, next) {
 })
 
 // return an imagepost's comments
-router.get('/:imagepost/comments', auth.optional, function (req, res, next) {
+router.get('/:slug/comments', auth.optional, function (req, res, next) {
+  console.log('Hit here');
+  const slug= req.params.slug;
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null)
     .then(function (user) {
-      return req.imagepost
-        .populate({
+      // console.log(user);
+        return ImagePost.findOne({slug: slug}).then(function(imagepost){
+        // console.log('PLAIN', imagepost._doc);
+        imagepost.populate({
+          path: 'comments',
+          populate: {
+            path: 'author'
+          },
+          options: {
+            sort: {
+              createdAt: 'desc'
+            }
+          }
+        })
+        .execPopulate()
+        .then(function (imagepost) {
+          // console.log('ImagepostaRQWERQWEQEQW ', imagepost._doc)
+          return res.json({
+            comments: imagepost.comments.map(function (comment) {
+              console.log(comment.toJSONFor(user));
+              return comment.toJSONFor(user)
+            })
+          })
+        })
+      })
+    })
+    .catch(next)
+})
+
+/*
+
+.populate({
           path: 'comments',
           populate: {
             path: 'author'
@@ -329,23 +361,22 @@ router.get('/:imagepost/comments', auth.optional, function (req, res, next) {
     .catch(next)
 })
 
+*/
 // create a new comment
-router.post('/:imagepost/comments', auth.required, function (req, res, next) {
-  const slug = req.params.imagepost
+router.post('/:slug/comments', auth.required, function (req, res, next) {
+  const slug = req.params.slug
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
-
-      var comment = new Comment(req.body.comment)
-      comment.imagepost = req.params.imagepost
-      comment.author = user
-
-      return comment.save().then(function (comment) {
-        ImagePost.find({ slug: slug }).then(function (imagepost) {
-          imagepost.comments.push(comment)
-          return req.imagepost.save().then(function (imagepost) {
+      return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
+        var comment = new Comment(req.body.comment)
+        comment.author = user
+        comment.imagepost = imagepost
+        return comment.save().then(function (comment) {
+          imagepost.addComment(comment.id)
+          return imagepost.save().then(function (imagepost) {
             res.json({ comment: comment.toJSONFor(user) })
           })
         })
@@ -353,6 +384,8 @@ router.post('/:imagepost/comments', auth.required, function (req, res, next) {
     })
     .catch(next)
 })
+
+
 
 router.delete('/:imagepost/comments/:comment', auth.required, function (
   req,

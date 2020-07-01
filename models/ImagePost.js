@@ -35,6 +35,9 @@ ImagePostSchema.methods.slugify = function () {
     ((Math.random() * Math.pow(36, 6)) | 0).toString(36)
 }
 
+ImagePostSchema.methods.addComment = function(id){
+  this.comments = this.comments.concat([id]);
+}
 ImagePostSchema.methods.updateFavoriteCount = function () {
   var imagepost = this
 
