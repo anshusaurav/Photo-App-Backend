@@ -7,11 +7,10 @@ var User = mongoose.model('User')
 var auth = require('../auth')
 // var path = require('path')
 const uuid = require('uuid')
-const DIR = './public/'
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, DIR)
+    cb(null, './public/uploads/')
   },
   filename: (req, file, cb) => {
     const fileName = file.originalname
@@ -172,17 +171,18 @@ router.post('/', auth.required, upload.single('filename'), function (
   res,
   next
 ) {
-  console.log('HERE POSt')
-  console.log(req.body)
-  console.log(req.file)
-  const url = req.protocol + '://' + req.get('host');
+  // console.log('HERE POSt')
+  // console.log(req.body)
+  // console.log(req.file)
+  // const url = req.protocol + '://' + req.get('host');
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
-      console.log(user);
-      console.log('user veriified')
+      console.log(req.file);
+      // console.log(user);
+      // console.log('user veriified')
       var imagepost = new ImagePost({
         filename: req.file.filename,
         description: req.body.description,

@@ -13,6 +13,7 @@ var ImagePostSchema = new mongoose.Schema(
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
     tagList: [{ type: String }],
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+
   },
   { timestamps: true }
 )
@@ -57,6 +58,8 @@ ImagePostSchema.methods.toJSONFor = function (user) {
     tagList: this.tagList,
     favorited: user ? user.isFavorite(this._id) : false,
     favoritesCount: this.favoritesCount,
+    commentsCount: this.comments.length,
+
     author: this.author.toProfileJSONFor(user)
   }
 }
