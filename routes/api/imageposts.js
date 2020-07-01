@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
       .toLowerCase()
       .split(' ')
       .join('-')
-   cb(null, uuid.v4().toString() + "_" + fileName)
+    cb(null, uuid.v4().toString() + '_' + fileName)
   }
 })
 
@@ -180,7 +180,7 @@ router.post('/', auth.required, upload.single('filename'), function (
       if (!user) {
         return res.sendStatus(401)
       }
-      console.log(req.file);
+      console.log(req.file)
       // console.log(user);
       // console.log('user veriified')
       var imagepost = new ImagePost({
@@ -189,15 +189,14 @@ router.post('/', auth.required, upload.single('filename'), function (
         location: req.body.location,
         tagList: req.body.tags
       })
-      imagepost.author = user;
+      imagepost.author = user
 
       return imagepost.save().then(function () {
         console.log('id ', imagepost._id)
-        return user.addImagePost(imagepost._id).then(function(){
-          console.log(user);
+        return user.addImagePost(imagepost._id).then(function () {
+          console.log(user)
           return res.json({ imagepost: imagepost.toJSONFor(user) })
         })
-        
       })
     })
     .catch(next)
@@ -332,6 +331,7 @@ router.get('/:imagepost/comments', auth.optional, function (req, res, next) {
 
 // create a new comment
 router.post('/:imagepost/comments', auth.required, function (req, res, next) {
+  const slug = req.params.imagepost
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
@@ -339,14 +339,15 @@ router.post('/:imagepost/comments', auth.required, function (req, res, next) {
       }
 
       var comment = new Comment(req.body.comment)
-      comment.imagepost = req.imagepost
+      comment.imagepost = req.params.imagepost
       comment.author = user
 
-      return comment.save().then(function () {
-        req.imagepost.comments.push(comment)
-
-        return req.imagepost.save().then(function (article) {
-          res.json({ comment: comment.toJSONFor(user) })
+      return comment.save().then(function (comment) {
+        ImagePost.find({ slug: slug }).then(function (imagepost) {
+          imagepost.comments.push(comment)
+          return req.imagepost.save().then(function (imagepost) {
+            res.json({ comment: comment.toJSONFor(user) })
+          })
         })
       })
     })
