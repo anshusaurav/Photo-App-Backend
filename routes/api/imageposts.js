@@ -171,18 +171,11 @@ router.post('/', auth.required, upload.single('filename'), function (
   res,
   next
 ) {
-  // console.log('HERE POSt')
-  // console.log(req.body)
-  // console.log(req.file)
-  // const url = req.protocol + '://' + req.get('host');
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
-      console.log(req.file)
-      // console.log(user);
-      // console.log('user veriified')
       var imagepost = new ImagePost({
         filename: req.file.filename,
         description: req.body.description,
@@ -192,9 +185,7 @@ router.post('/', auth.required, upload.single('filename'), function (
       imagepost.author = user
 
       return imagepost.save().then(function () {
-        console.log('id ', imagepost._id)
         return user.addImagePost(imagepost._id).then(function () {
-          console.log(user)
           return res.json({ imagepost: imagepost.toJSONFor(user) })
         })
       })
@@ -203,16 +194,29 @@ router.post('/', auth.required, upload.single('filename'), function (
 })
 
 // return a imagepost
-router.get('/:imagepost', auth.optional, function (req, res, next) {
-  Promise.all([
-    req.payload ? User.findById(req.payload.id) : null,
-    req.imagepost.populate('author').execPopulate()
-  ])
-    .then(function (results) {
-      var user = results[0]
-
-      return res.json({ imagepost: req.imagepost.toJSONFor(user) })
-    })
+router.get('/:slug', auth.optional, function (req, res, next) {
+  const slug = req.params.slug;
+  Promise.resolve(req.payload ? User.findById(req.payload.id) : null)
+    .then(function (user) {
+        return ImagePost.findOne({slug: slug}).then(function(imagepost){
+          console.log('BEFORE POPULATE',imagepost._doc);
+        imagepost.populate({
+          
+            path: 'author'
+          ,
+          options: {
+            sort: {
+              createdAt: 'desc'
+            }
+          }
+        }).execPopulate()
+        .then(function (imagepost) {
+          console.log('AFTER POPULATE',imagepost._doc);
+          return res.json({ imagepost: imagepost.toJSONFor(user)})
+            })
+          })
+        })
+      
     .catch(next)
 })
 
@@ -303,13 +307,10 @@ router.delete('/:imagepost/favorite', auth.required, function (req, res, next) {
 
 // return an imagepost's comments
 router.get('/:slug/comments', auth.optional, function (req, res, next) {
-  console.log('Hit here');
   const slug= req.params.slug;
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null)
     .then(function (user) {
-      // console.log(user);
         return ImagePost.findOne({slug: slug}).then(function(imagepost){
-        // console.log('PLAIN', imagepost._doc);
         imagepost.populate({
           path: 'comments',
           populate: {
@@ -323,10 +324,8 @@ router.get('/:slug/comments', auth.optional, function (req, res, next) {
         })
         .execPopulate()
         .then(function (imagepost) {
-          // console.log('ImagepostaRQWERQWEQEQW ', imagepost._doc)
           return res.json({
             comments: imagepost.comments.map(function (comment) {
-              console.log(comment.toJSONFor(user));
               return comment.toJSONFor(user)
             })
           })
