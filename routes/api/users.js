@@ -48,15 +48,15 @@ router.get('/user', auth.required, function (req, res, next) {
 })
 
 router.put('/user', auth.required, upload.single('image'), function (req, res, next) {
-  console.log(req.file);
-  console.log(req.body);
+  
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
-      console.log('HER E '+req.file.filename);
-      // only update fields that were actually passed...
+      if(req.body.signal) {     //just to remove profile image
+        user.image=''
+      }
       if (req.body.user && req.body.user.username) {
         user.username = req.body.user.username
       }
