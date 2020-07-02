@@ -1,8 +1,39 @@
 var mongoose = require('mongoose')
 var router = require('express').Router()
 var passport = require('passport')
+var multer = require('multer')
+var uuid = require('uuid')
 var User = mongoose.model('User')
 var auth = require('../auth')
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './public/uploads/')
+  },
+  filename: (req, file, cb) => {
+    const fileName = file.originalname
+      .toLowerCase()
+      .split(' ')
+      .join('-')
+    cb(null, uuid.v4().toString() + '_' + fileName)
+  }
+})
+
+var upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype == 'image/png' ||
+      file.mimetype == 'image/jpg' ||
+      file.mimetype == 'image/jpeg'
+    ) {
+      cb(null, true)
+    } else {
+      cb(null, false)
+      return cb(new Error('Only .png, .jpg and .jpeg format allowed!'))
+    }
+  }
+})
 
 router.get('/user', auth.required, function (req, res, next) {
   User.findById(req.payload.id)
@@ -16,30 +47,32 @@ router.get('/user', auth.required, function (req, res, next) {
     .catch(next)
 })
 
-router.put('/user', auth.required, function (req, res, next) {
+router.put('/user', auth.required, upload.single('image'), function (req, res, next) {
+  console.log(req.file);
+  console.log(req.body);
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
-
+      console.log('HER E '+req.file.filename);
       // only update fields that were actually passed...
-      if (typeof req.body.user.username !== 'undefined') {
+      if (req.body.user && req.body.user.username) {
         user.username = req.body.user.username
       }
-      if (typeof req.body.user.fullname !== 'undefined') {
+      if (req.body.user &&req.body.user.fullname) {
         user.fullname = req.body.user.fullname
       }
-      if (typeof req.body.user.email !== 'undefined') {
+      if (req.body.user &&req.body.user.email) {
         user.email = req.body.user.email
       }
-      if (typeof req.body.user.bio !== 'undefined') {
+      if (req.body.user &&req.body.user.bio) {
         user.bio = req.body.user.bio
       }
-      if (typeof req.body.user.image !== 'undefined') {
-        user.image = req.body.user.image
+      if (req.file) {
+        user.image = req.file.filename
       }
-      if (typeof req.body.user.password !== 'undefined') {
+      if (req.body.user && req.body.user.password) {
         user.setPassword(req.body.user.password)
       }
 

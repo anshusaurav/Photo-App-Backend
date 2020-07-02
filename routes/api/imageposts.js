@@ -275,34 +275,34 @@ router.post('/:slug/favorite', auth.required, function (req, res, next) {
         return res.sendStatus(401)
       }
       return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
-        console.log(imagepost._doc);
-        
+        console.log(imagepost._doc)
+
         return user.favorite(imagepost.id).then(function (user) {
           return imagepost.updateFavoriteCount().then(function (imagepost) {
-            console.log('LIKE');
+            // console.log('LIKE')
             imagepost
-          .populate({
-            path: 'author',
-            options: {
-              sort: {
-                createdAt: 'desc'
-              }
-            }
-          })
-          .execPopulate()
-          .then(function (imagepost) {
-            return res.json({ imagepost: imagepost.toJSONFor(user) })
+              .populate({
+                path: 'author',
+                options: {
+                  sort: {
+                    createdAt: 'desc'
+                  }
+                }
+              })
+              .execPopulate()
+              .then(function (imagepost) {
+                return res.json({ imagepost: imagepost.toJSONFor(user) })
+              })
           })
         })
       })
     })
-  })
     .catch(next)
 })
 
 // Unfavorite an imagepost
 router.delete('/:slug/favorite', auth.required, function (req, res, next) {
-  var slug = req.params.slug;
+  var slug = req.params.slug
 
   User.findById(req.payload.id)
     .then(function (user) {
@@ -310,25 +310,25 @@ router.delete('/:slug/favorite', auth.required, function (req, res, next) {
         return res.sendStatus(401)
       }
       return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
-      return user.unfavorite(imagepost.id).then(function (user) {
-        return imagepost.updateFavoriteCount().then(function (imagepost) {
-          imagepost
-          .populate({
-            path: 'author',
-            options: {
-              sort: {
-                createdAt: 'desc'
-              }
-            }
+        return user.unfavorite(imagepost.id).then(function (user) {
+          return imagepost.updateFavoriteCount().then(function (imagepost) {
+            imagepost
+              .populate({
+                path: 'author',
+                options: {
+                  sort: {
+                    createdAt: 'desc'
+                  }
+                }
+              })
+              .execPopulate()
+              .then(function (imagepost) {
+                return res.json({ imagepost: imagepost.toJSONFor(user) })
+              })
           })
-          .execPopulate()
-          .then(function (imagepost) {
-          return res.json({ imagepost: imagepost.toJSONFor(user) })
         })
       })
     })
-    })
-  })
     .catch(next)
 })
 

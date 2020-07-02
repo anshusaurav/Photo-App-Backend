@@ -83,7 +83,7 @@ UserSchema.methods.toAuthJSON = function () {
     .join(' '),
     token: this.generateJWT(),
     bio: this.bio,
-    image: this.image,
+    image: this.image?`http://localhost:4000/${this.image}`: 'https://static.productionready.io/images/smiley-cyrus.jpg',
     numfollowing: this.following.length,
     numFollowers: this.follower.length,
     numPosts: this.imageposts.length
@@ -96,7 +96,7 @@ UserSchema.methods.toProfileJSONFor = function (user) {
     fullname: this.fullname,
     bio: this.bio,
     image:
-      this.image || 'https://static.productionready.io/images/smiley-cyrus.jpg',
+      this.image?`http://localhost:4000/${this.image}`: 'https://static.productionready.io/images/smiley-cyrus.jpg',
     following: user ? user.isFollowing(this._id) : false
   }
 }
