@@ -32,7 +32,7 @@ var UserSchema = new mongoose.Schema(
     imageposts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ImagePost' }],
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ImagePost' }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    follower:[{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
+    follower: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     hash: String,
     salt: String
   },
@@ -75,15 +75,17 @@ UserSchema.methods.toAuthJSON = function () {
     username: this.username,
     email: this.email,
     fullname: this.fullname
-    .toLowerCase()
-    .split(' ')
-    .map(function(word) {
-        return word[0].toUpperCase() + word.substr(1);
-    })
-    .join(' '),
+      .toLowerCase()
+      .split(' ')
+      .map(function (word) {
+        return word[0].toUpperCase() + word.substr(1)
+      })
+      .join(' '),
     token: this.generateJWT(),
     bio: this.bio,
-    image: this.image?`http://localhost:4000/${this.image}`: 'https://static.productionready.io/images/smiley-cyrus.jpg',
+    image: this.image
+      ? `http://localhost:4000/${this.image}`
+      : 'https://static.productionready.io/images/smiley-cyrus.jpg',
     numfollowing: this.following.length,
     numFollowers: this.follower.length,
     numPosts: this.imageposts.length
@@ -95,14 +97,15 @@ UserSchema.methods.toProfileJSONFor = function (user) {
     username: this.username,
     fullname: this.fullname,
     bio: this.bio,
-    image:
-      this.image?`http://localhost:4000/${this.image}`: 'https://static.productionready.io/images/smiley-cyrus.jpg',
+    image: this.image
+      ? `http://localhost:4000/${this.image}`
+      : 'https://static.productionready.io/images/smiley-cyrus.jpg',
     following: user ? user.isFollowing(this._id) : false
   }
 }
 UserSchema.methods.addImagePost = function (id) {
   if (this.imageposts.indexOf(id) === -1) {
-    this.imageposts = this.imageposts.concat([id]); 
+    this.imageposts = this.imageposts.concat([id])
   }
 
   return this.save()
@@ -113,10 +116,9 @@ UserSchema.methods.removeImagePost = function (id) {
   return this.save()
 }
 
-
 UserSchema.methods.favorite = function (id) {
   if (this.favorites.indexOf(id) === -1) {
-    this.favorites = this.favorites.concat([id]); 
+    this.favorites = this.favorites.concat([id])
   }
 
   return this.save()
@@ -146,15 +148,15 @@ UserSchema.methods.unfollow = function (id) {
   return this.save()
 }
 
-UserSchema.methods.getFollowed = function(id) {
-  if(this.follower.indexOf(id) === -1){
-    this.follower.push(id);
+UserSchema.methods.getFollowed = function (id) {
+  if (this.follower.indexOf(id) === -1) {
+    this.follower.push(id)
   }
-  return this.save();
+  return this.save()
 }
-UserSchema.methods.getUnfollowed = function(id) {
-  this.follower.remove(id);
-  return this.save();
+UserSchema.methods.getUnfollowed = function (id) {
+  this.follower.remove(id)
+  return this.save()
 }
 UserSchema.methods.isFollowing = function (id) {
   return this.following.some(function (followId) {

@@ -33,18 +33,19 @@ router.get('/:username', auth.optional, function (req, res, next) {
 })
 
 router.post('/:username/follow', auth.required, function (req, res, next) {
-  var profileId = req.profile._id
+  var profileId = req.params.username
 
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
-
-      return user.follow(profileId).then(function () {
+      User.findOne({username: profileId}).then(function (userF){
+      return user.follow(userF.id).then(function () {
         return res.json({ profile: req.profile.toProfileJSONFor(user) })
       })
     })
+  })
     .catch(next)
 })
 
