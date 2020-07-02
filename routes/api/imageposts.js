@@ -195,28 +195,26 @@ router.post('/', auth.required, upload.single('filename'), function (
 
 // return a imagepost
 router.get('/:slug', auth.optional, function (req, res, next) {
-  const slug = req.params.slug;
+  const slug = req.params.slug
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null)
     .then(function (user) {
-        return ImagePost.findOne({slug: slug}).then(function(imagepost){
-          console.log('BEFORE POPULATE',imagepost._doc);
-        imagepost.populate({
-          
-            path: 'author'
-          ,
-          options: {
-            sort: {
-              createdAt: 'desc'
+      return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
+        imagepost
+          .populate({
+            path: 'author',
+            options: {
+              sort: {
+                createdAt: 'desc'
+              }
             }
-          }
-        }).execPopulate()
-        .then(function (imagepost) {
-          console.log('AFTER POPULATE',imagepost._doc);
-          return res.json({ imagepost: imagepost.toJSONFor(user)})
-            })
           })
-        })
-      
+          .execPopulate()
+          .then(function (imagepost) {
+            return res.json({ imagepost: imagepost.toJSONFor(user) })
+          })
+      })
+    })
+
     .catch(next)
 })
 
@@ -268,68 +266,98 @@ router.delete('/:imagepost', auth.required, function (req, res, next) {
 })
 
 // Favorite an imagepost
-router.post('/:imagepost/favorite', auth.required, function (req, res, next) {
-  var imagepostId = req.imagepost._id
+router.post('/:slug/favorite', auth.required, function (req, res, next) {
+  var slug = req.params.slug
 
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
-
-      return user.favorite(imagepostId).then(function () {
-        return req.imagepost.updateFavoriteCount().then(function (imagepost) {
-          return res.json({ imagepost: imagepost.toJSONFor(user) })
+      return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
+        console.log(imagepost._doc);
+        
+        return user.favorite(imagepost.id).then(function (user) {
+          return imagepost.updateFavoriteCount().then(function (imagepost) {
+            console.log('LIKE');
+            imagepost
+          .populate({
+            path: 'author',
+            options: {
+              sort: {
+                createdAt: 'desc'
+              }
+            }
+          })
+          .execPopulate()
+          .then(function (imagepost) {
+            return res.json({ imagepost: imagepost.toJSONFor(user) })
+          })
         })
       })
     })
+  })
     .catch(next)
 })
 
 // Unfavorite an imagepost
-router.delete('/:imagepost/favorite', auth.required, function (req, res, next) {
-  var imagepostId = req.article._id
+router.delete('/:slug/favorite', auth.required, function (req, res, next) {
+  var slug = req.params.slug;
 
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
-
-      return user.unfavorite(imagepostId).then(function () {
-        return req.imagepost.updateFavoriteCount().then(function (imagepost) {
+      return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
+      return user.unfavorite(imagepost.id).then(function (user) {
+        return imagepost.updateFavoriteCount().then(function (imagepost) {
+          imagepost
+          .populate({
+            path: 'author',
+            options: {
+              sort: {
+                createdAt: 'desc'
+              }
+            }
+          })
+          .execPopulate()
+          .then(function (imagepost) {
           return res.json({ imagepost: imagepost.toJSONFor(user) })
         })
       })
     })
+    })
+  })
     .catch(next)
 })
 
 // return an imagepost's comments
 router.get('/:slug/comments', auth.optional, function (req, res, next) {
-  const slug= req.params.slug;
+  const slug = req.params.slug
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null)
     .then(function (user) {
-        return ImagePost.findOne({slug: slug}).then(function(imagepost){
-        imagepost.populate({
-          path: 'comments',
-          populate: {
-            path: 'author'
-          },
-          options: {
-            sort: {
-              createdAt: 'desc'
+      return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
+        imagepost
+          .populate({
+            path: 'comments',
+            populate: {
+              path: 'author'
+            },
+            options: {
+              sort: {
+                createdAt: 'desc'
+              }
             }
-          }
-        })
-        .execPopulate()
-        .then(function (imagepost) {
-          return res.json({
-            comments: imagepost.comments.map(function (comment) {
-              return comment.toJSONFor(user)
+          })
+          .execPopulate()
+          .then(function (imagepost) {
+            return res.json({
+              comments: imagepost.comments.map(function (comment) {
+                return comment.toJSONFor(user)
+              })
             })
           })
-        })
       })
     })
     .catch(next)
@@ -383,8 +411,6 @@ router.post('/:slug/comments', auth.required, function (req, res, next) {
     })
     .catch(next)
 })
-
-
 
 router.delete('/:imagepost/comments/:comment', auth.required, function (
   req,

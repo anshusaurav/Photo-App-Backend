@@ -13,7 +13,6 @@ var ImagePostSchema = new mongoose.Schema(
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
     tagList: [{ type: String }],
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-
   },
   { timestamps: true }
 )
@@ -35,8 +34,8 @@ ImagePostSchema.methods.slugify = function () {
     ((Math.random() * Math.pow(36, 6)) | 0).toString(36)
 }
 
-ImagePostSchema.methods.addComment = function(id){
-  this.comments = this.comments.concat([id]);
+ImagePostSchema.methods.addComment = function (id) {
+  this.comments = this.comments.concat([id])
 }
 ImagePostSchema.methods.updateFavoriteCount = function () {
   var imagepost = this
@@ -46,7 +45,7 @@ ImagePostSchema.methods.updateFavoriteCount = function () {
   ) {
     imagepost.favoritesCount = count
 
-    return article.save()
+    return imagepost.save()
   })
 }
 
