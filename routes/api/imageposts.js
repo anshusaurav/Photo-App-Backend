@@ -129,7 +129,7 @@ router.get('/', auth.optional, function (req, res, next) {
 router.get('/feed', auth.required, function (req, res, next) {
   var limit = 20
   var offset = 0
-
+  console.log('HERERasdas');
   if (typeof req.query.limit !== 'undefined') {
     limit = req.query.limit
   }
@@ -149,7 +149,7 @@ router.get('/feed', auth.required, function (req, res, next) {
         .skip(Number(offset))
         .populate('author')
         .exec(),
-      Article.count({ author: { $in: user.following } })
+      ImagePost.count({ author: { $in: user.following } })
     ])
       .then(function (results) {
         var imageposts = results[0]

@@ -86,7 +86,7 @@ UserSchema.methods.toAuthJSON = function () {
     image: this.image
       ? `http://localhost:4000/${this.image}`
       : 'https://static.productionready.io/images/smiley-cyrus.jpg',
-    numfollowing: this.following.length,
+    numFollowing: this.following.length,
     numFollowers: this.follower.length,
     numPosts: this.imageposts.length
   }
@@ -137,7 +137,7 @@ UserSchema.methods.isFavorite = function (id) {
 
 UserSchema.methods.follow = function (id) {
   if (this.following.indexOf(id) === -1) {
-    this.following.push(id)
+    this.following =this.following.concat(id)
   }
 
   return this.save()
@@ -150,7 +150,7 @@ UserSchema.methods.unfollow = function (id) {
 
 UserSchema.methods.getFollowed = function (id) {
   if (this.follower.indexOf(id) === -1) {
-    this.follower.push(id)
+    this.follower = this.follower.concat(id)
   }
   return this.save()
 }

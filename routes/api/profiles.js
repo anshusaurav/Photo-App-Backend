@@ -40,17 +40,19 @@ router.post('/:username/follow', auth.required, function (req, res, next) {
       if (!user) {
         return res.sendStatus(401)
       }
-      User.findOne({username: profileId}).then(function (userF){
-      return user.follow(userF.id).then(function () {
-        return res.json({ profile: req.profile.toProfileJSONFor(user) })
+      return User.findOne({ username: profileId }).then(function (userF) {
+        return user.follow(userF.id).then(function () {
+          return userF.getFollowed(user.id).then(function () {
+            return res.json({ profile: req.profile.toProfileJSONFor(user) })
+          })
+        })
       })
     })
-  })
     .catch(next)
 })
 
 router.delete('/:username/follow', auth.required, function (req, res, next) {
-  var profileId = req.profile._id
+  var profileId = req.params.username
 
   User.findById(req.payload.id)
     .then(function (user) {
@@ -58,8 +60,12 @@ router.delete('/:username/follow', auth.required, function (req, res, next) {
         return res.sendStatus(401)
       }
 
-      return user.unfollow(profileId).then(function () {
-        return res.json({ profile: req.profile.toProfileJSONFor(user) })
+      return User.findOne({ username: profileId }).then(function (userF) {
+        return user.unfollow(userF.id).then(function () {
+          return userF.getUnfollowed(user.id).then(function () {
+            return res.json({ profile: req.profile.toProfileJSONFor(user) })
+          })
+        })
       })
     })
     .catch(next)
