@@ -93,6 +93,7 @@ UserSchema.methods.toAuthJSON = function () {
 }
 
 UserSchema.methods.toProfileJSONFor = function (user) {
+  console.log()
   return {
     username: this.username,
     fullname: this.fullname,
@@ -159,7 +160,16 @@ UserSchema.methods.getUnfollowed = function (id) {
   return this.save()
 }
 UserSchema.methods.isFollowing = function (id) {
+  console.log(this.following.some(function (followId) {
+   
+    
+    return followId.toString() === id.toString()
+  }))
   return this.following.some(function (followId) {
+    console.log('OOK HEREA VE');
+    console.log(id.toString())
+    console.log(followId.toString());
+    
     return followId.toString() === id.toString()
   })
 }

@@ -147,6 +147,7 @@ router.get('/feed', auth.required, function (req, res, next) {
       ImagePost.find({ author: { $in: user.following } })
         .limit(Number(limit))
         .skip(Number(offset))
+        .sort({ createdAt: 'desc' })
         .populate('author')
         .exec(),
       ImagePost.count({ author: { $in: user.following } })
@@ -210,6 +211,7 @@ router.get('/:slug', auth.optional, function (req, res, next) {
           })
           .execPopulate()
           .then(function (imagepost) {
+            console.log(imagepost._doc);
             return res.json({ imagepost: imagepost.toJSONFor(user) })
           })
       })
