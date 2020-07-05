@@ -13,7 +13,7 @@ var ImagePostSchema = new mongoose.Schema(
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
     tagList: [{ type: String }],
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    isImage: {Number, default: 1},
+    isImage: { type: Number, default: 1 }
   },
   { timestamps: true }
 )

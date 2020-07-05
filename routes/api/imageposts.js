@@ -5,37 +5,49 @@ var ImagePost = mongoose.model('ImagePost')
 var Comment = mongoose.model('Comment')
 var User = mongoose.model('User')
 var auth = require('../auth')
-// var path = require('path')
+var path = require('path')
+const mime = require('mime-types')
 const uuid = require('uuid')
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './public/uploads/')
-  },
-  filename: (req, file, cb) => {
-    const fileName = file.originalname
-      .toLowerCase()
-      .split(' ')
-      .join('-')
-    cb(null, uuid.v4().toString() + '_' + fileName)
-  }
+var config = require('./../../config')
+const { Storage } = require('@google-cloud/storage')
+const storage = new Storage({
+  projectId: config.google.projectId,
+  keyFilename: path.join(
+    __dirname,
+    './../../bookstoreapp-279005-0a4ab776114f.json'
+  )
 })
 
-var upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype == 'image/png' ||
-      file.mimetype == 'image/jpg' ||
-      file.mimetype == 'image/jpeg'
-    ) {
-      cb(null, true)
-    } else {
-      cb(null, false)
-      return cb(new Error('Only .png, .jpg and .jpeg format allowed!'))
-    }
-  }
-})
+// require('./../../bookstoreapp-279005-0a4ab776114f.json')
+
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, './public/uploads/')
+//   },
+//   filename: (req, file, cb) => {
+//     const fileName = file.originalname
+//       .toLowerCase()
+//       .split(' ')
+//       .join('-')
+//     cb(null, uuid.v4().toString() + '_' + fileName)
+//   }
+// })
+
+// var upload = multer({
+//   storage: storage,
+//   fileFilter: (req, file, cb) => {
+//     if (
+//       file.mimetype == 'image/png' ||
+//       file.mimetype == 'image/jpg' ||
+//       file.mimetype == 'image/jpeg'
+//     ) {
+//       cb(null, true)
+//     } else {
+//       cb(null, false)
+//       return cb(new Error('Only .png, .jpg and .jpeg format allowed!'))
+//     }
+//   }
+// })
 // Preload imagepost objects on routes with ':p'
 router.param('p', function (req, res, next, slug) {
   ImagePost.findOne({ slug: slug })
@@ -129,7 +141,7 @@ router.get('/', auth.optional, function (req, res, next) {
 router.get('/feed', auth.required, function (req, res, next) {
   var limit = 20
   var offset = 0
-  console.log('HERERasdas');
+  console.log('HERERasdas')
   if (typeof req.query.limit !== 'undefined') {
     limit = req.query.limit
   }
@@ -167,18 +179,49 @@ router.get('/feed', auth.required, function (req, res, next) {
   })
 })
 
-router.post('/', auth.required, upload.single('filename'), function (
+router.post('/', auth.required, multer().single('filename'), function (
   req,
   res,
   next
 ) {
-  User.findById(req.payload.id)
+
+  
+  const type = mime.lookup(req.file.originalname)
+  // console.log('Type: ', type)
+
+  // console.log(stora)
+  const bucket = storage.bucket('images-photoappbucket')
+  // console.log('bucket+'.'+bucket);
+  // console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0]);
+  const blob = bucket.file(
+    `${uuid.v4()}.${mime.extensions[type][0]}`
+  )
+  // console.log(blob);
+  const stream = blob.createWriteStream({
+    resumable: true,
+    contentType: type,
+    // predefinedAcl: 'publicRead'
+  })
+
+  stream.on('error', err => {
+    // console.log('Error');
+    next(err)
+  })
+
+  stream.on('finish', () => {
+    console.log(`https://storage.googleapis.com/${bucket.name}/${blob.name}`);
+    // res.status(200).json({
+    //   data: {
+    //     url: `https://storage.googleapis.com/${bucket.name}/${blob.name}`
+    //   }
+    // })
+    User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
         return res.sendStatus(401)
       }
       var imagepost = new ImagePost({
-        filename: req.file.filename,
+        filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
         description: req.body.description,
         location: req.body.location,
         tagList: req.body.tags
@@ -192,11 +235,35 @@ router.post('/', auth.required, upload.single('filename'), function (
       })
     })
     .catch(next)
+  })
+
+  stream.end(req.file.buffer);
+  // Ends here
+  // User.findById(req.payload.id)
+  //   .then(function (user) {
+  //     if (!user) {
+  //       return res.sendStatus(401)
+  //     }
+  //     var imagepost = new ImagePost({
+  //       filename: req.file.filename,
+  //       description: req.body.description,
+  //       location: req.body.location,
+  //       tagList: req.body.tags
+  //     })
+  //     imagepost.author = user
+
+  //     return imagepost.save().then(function () {
+  //       return user.addImagePost(imagepost._id).then(function () {
+  //         return res.json({ imagepost: imagepost.toJSONFor(user) })
+  //       })
+  //     })
+  //   })
+  //   .catch(next)
 })
 
 // return a imagepost
 router.get('/:slug', auth.optional, function (req, res, next) {
-  const slug = req.params.slug;
+  const slug = req.params.slug
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null)
     .then(function (user) {
       return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
