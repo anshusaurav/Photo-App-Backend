@@ -24,7 +24,6 @@ var UserSchema = new mongoose.Schema(
     },
     fullname: {
       type: String,
-      lowercase: true,
       required: [true, "can't be blank"]
     },
     bio: String,
@@ -74,18 +73,12 @@ UserSchema.methods.toAuthJSON = function () {
   return {
     username: this.username,
     email: this.email,
-    fullname: this.fullname
-      .toLowerCase()
-      .split(' ')
-      .map(function (word) {
-        return word[0].toUpperCase() + word.substr(1)
-      })
-      .join(' '),
+    fullname: this.fullname,  
     token: this.generateJWT(),
     bio: this.bio,
     image: this.image
       ? `http://localhost:4000/${this.image}`
-      : 'https://static.productionready.io/images/smiley-cyrus.jpg',
+      : 'https://cdn4.iconfinder.com/data/icons/emoticons-4/100/smiley-11-512.png',
     numFollowing: this.following.length,
     numFollowers: this.follower.length,
     numPosts: this.imageposts.length
@@ -93,14 +86,14 @@ UserSchema.methods.toAuthJSON = function () {
 }
 
 UserSchema.methods.toProfileJSONFor = function (user) {
-  console.log()
+  // console.log()
   return {
     username: this.username,
     fullname: this.fullname,
     bio: this.bio,
     image: this.image
       ? `http://localhost:4000/${this.image}`
-      : 'https://static.productionready.io/images/smiley-cyrus.jpg',
+      : 'https://cdn4.iconfinder.com/data/icons/emoticons-4/100/smiley-11-512.png',
     following: user ? user.isFollowing(this._id) : false
   }
 }
@@ -160,15 +153,9 @@ UserSchema.methods.getUnfollowed = function (id) {
   return this.save()
 }
 UserSchema.methods.isFollowing = function (id) {
-  console.log(this.following.some(function (followId) {
-   
-    
-    return followId.toString() === id.toString()
-  }))
+  
   return this.following.some(function (followId) {
-    console.log('OOK HEREA VE');
-    console.log(id.toString())
-    console.log(followId.toString());
+    
     
     return followId.toString() === id.toString()
   })

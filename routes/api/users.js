@@ -48,7 +48,7 @@ router.get('/user', auth.required, function (req, res, next) {
 })
 
 router.put('/user', auth.required, upload.single('image'), function (req, res, next) {
-  
+  console.log(req.file);
   User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
@@ -113,10 +113,10 @@ router.post('/users/login', function (req, res, next) {
 router.post('/users', function (req, res, next) {
   var user = new User()
 
-  user.username = req.body.user.username
-  user.email = req.body.user.email
-  user.fullname = req.body.user.fullname
-  user.setPassword(req.body.user.password)
+    user.username = req.body.user.username
+    user.email = req.body.user.email
+    user.fullname = req.body.user.fullname
+    user.setPassword(req.body.user.password)
 
   user
     .save()

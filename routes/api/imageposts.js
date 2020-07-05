@@ -196,7 +196,7 @@ router.post('/', auth.required, upload.single('filename'), function (
 
 // return a imagepost
 router.get('/:slug', auth.optional, function (req, res, next) {
-  const slug = req.params.slug
+  const slug = req.params.slug;
   Promise.resolve(req.payload ? User.findById(req.payload.id) : null)
     .then(function (user) {
       return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
@@ -211,7 +211,6 @@ router.get('/:slug', auth.optional, function (req, res, next) {
           })
           .execPopulate()
           .then(function (imagepost) {
-            console.log(imagepost._doc);
             return res.json({ imagepost: imagepost.toJSONFor(user) })
           })
       })
