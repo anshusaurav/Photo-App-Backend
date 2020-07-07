@@ -141,7 +141,6 @@ router.get('/', auth.optional, function (req, res, next) {
 router.get('/feed', auth.required, function (req, res, next) {
   var limit = 20
   var offset = 0
-  console.log('HERERasdas')
   if (typeof req.query.limit !== 'undefined') {
     limit = req.query.limit
   }
@@ -184,15 +183,12 @@ router.post('/', auth.required, multer().single('filename'), function (
   res,
   next
 ) {
+  console.log(req.file);
+  console.log('Name: ',req.file.name);
 
-  
-  const type = mime.lookup(req.file.originalname)
-  // console.log('Type: ', type)
-
-  // console.log(stora)
+  const type =req.file.mimetype;
   const bucket = storage.bucket('images-photoappbucket')
-  // console.log('bucket+'.'+bucket);
-  // console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0]);
+  console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0]);
   const blob = bucket.file(
     `${uuid.v4()}.${mime.extensions[type][0]}`
   )

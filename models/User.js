@@ -77,7 +77,7 @@ UserSchema.methods.toAuthJSON = function () {
     token: this.generateJWT(),
     bio: this.bio,
     image: this.image
-      ? `http://localhost:4000/${this.image}`
+      ? `${this.image}`
       : 'https://cdn4.iconfinder.com/data/icons/emoticons-4/100/smiley-11-512.png',
     numFollowing: this.following.length,
     numFollowers: this.follower.length,
@@ -92,7 +92,7 @@ UserSchema.methods.toProfileJSONFor = function (user) {
     fullname: this.fullname,
     bio: this.bio,
     image: this.image
-      ? `http://localhost:4000/${this.image}`
+      ? `${this.image}`
       : 'https://cdn4.iconfinder.com/data/icons/emoticons-4/100/smiley-11-512.png',
     following: user ? user.isFollowing(this._id) : false
   }
