@@ -183,16 +183,12 @@ router.post('/', auth.required, multer().single('filename'), function (
   res,
   next
 ) {
-  console.log(req.file);
-  console.log('Name: ',req.file.name);
-
   const type =req.file.mimetype;
   const bucket = storage.bucket('images-photoappbucket')
   console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0]);
   const blob = bucket.file(
     `${uuid.v4()}.${mime.extensions[type][0]}`
   )
-  // console.log(blob);
   const stream = blob.createWriteStream({
     resumable: true,
     contentType: type,
@@ -200,17 +196,14 @@ router.post('/', auth.required, multer().single('filename'), function (
   })
 
   stream.on('error', err => {
-    // console.log('Error');
     next(err)
   })
-
+  stream.on('data', data => {
+    console.log(data)
+  })
   stream.on('finish', () => {
     console.log(`https://storage.googleapis.com/${bucket.name}/${blob.name}`);
-    // res.status(200).json({
-    //   data: {
-    //     url: `https://storage.googleapis.com/${bucket.name}/${blob.name}`
-    //   }
-    // })
+    
     User.findById(req.payload.id)
     .then(function (user) {
       if (!user) {
