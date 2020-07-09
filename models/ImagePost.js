@@ -63,7 +63,7 @@ ImagePostSchema.methods.toJSONFor = function (user) {
     favorited: user ? user.isFavorite(this._id) : false,
     favoritesCount: this.favoritesCount,
     commentsCount: this.comments.length,
-
+    filenamesPL: this.filenamesPL,
     author: this.author.toProfileJSONFor(user)
   }
 }
