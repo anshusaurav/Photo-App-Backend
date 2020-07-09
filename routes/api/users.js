@@ -67,7 +67,7 @@ router.put('/user', auth.required, multer().single('image'), function (
 
   const type = req.file.mimetype
   const bucket = storage.bucket('images-photoappbucket')
-  console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0])
+  // console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0])
   const blob = bucket.file(`${uuid.v4()}.${mime.extensions[type][0]}`)
  
   const stream = blob.createWriteStream({

@@ -7,6 +7,7 @@ var ImagePostSchema = new mongoose.Schema(
   {
     slug: { type: String, lowercase: true, unique: true },
     filename: String,
+    filenamesPL: [String],
     description: String,
     location: String,
     favoritesCount: { type: Number, default: 0 },

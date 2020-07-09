@@ -178,55 +178,107 @@ router.get('/feed', auth.required, function (req, res, next) {
   })
 })
 
-router.post('/', auth.required, multer().single('filename'), function (
-  req,
-  res,
-  next
-) {
-  const type =req.file.mimetype;
+router.post('/', auth.required, multer().any(), function (req, res, next) {
+  const files = req.files
+  // if(files) {
+  //   files.forEach(file =>console.log(file));
+  // }
+
+  // const type = req.files[0].mimetype
   const bucket = storage.bucket('images-photoappbucket')
-  console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0]);
-  const blob = bucket.file(
-    `${uuid.v4()}.${mime.extensions[type][0]}`
-  )
-  const stream = blob.createWriteStream({
+  // console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0])
+  // const blob = bucket.file(`${uuid.v4()}.${mime.extensions[type][0]}`)
+  // const stream = blob.createWriteStream({
+  //   resumable: true,
+  //   contentType: type
+  //   // predefinedAcl: 'publicRead'
+  // })
+  const typeOne = req.files[1].mimetype
+  const blobOne = bucket.file(`${uuid.v4()}.${mime.extensions[typeOne][0]}`)
+  const streamOne = blobOne.createWriteStream({
     resumable: true,
-    contentType: type,
+    contentType: typeOne
     // predefinedAcl: 'publicRead'
   })
 
-  stream.on('error', err => {
+  const typeTwo = req.files[2].mimetype
+  const blobTwo = bucket.file(`${uuid.v4()}.${mime.extensions[typeTwo][0]}`)
+  const streamTwo = blobTwo.createWriteStream({
+    resumable: true,
+    contentType: typeTwo
+    // predefinedAcl: 'publicRead'
+  })
+
+  const typeThree = req.files[3].mimetype
+  const blobThree = bucket.file(`${uuid.v4()}.${mime.extensions[typeThree][0]}`)
+  const streamThree = blobThree.createWriteStream({
+    resumable: true,
+    contentType: typeThree
+    // predefinedAcl: 'publicRead'
+  })
+
+  // stream.on('error', err => {
+  //   console.log('ERR0')
+  //   next(err)
+  // })
+  streamOne.on('error', err => {
+    console.log('ERR1')
     next(err)
   })
-  stream.on('data', data => {
-    console.log(data)
+  streamTwo.on('error', err => {
+    console.log('ERR2')
+    next(err)
   })
-  stream.on('finish', () => {
-    console.log(`https://storage.googleapis.com/${bucket.name}/${blob.name}`);
-    
-    User.findById(req.payload.id)
-    .then(function (user) {
-      if (!user) {
-        return res.sendStatus(401)
-      }
-      var imagepost = new ImagePost({
-        filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
-        description: req.body.description,
-        location: req.body.location,
-        tagList: req.body.tags
-      })
-      imagepost.author = user
+  streamThree.on('error', err => {
+    console.log('ERR3')
+    next(err)
+  })
 
-      return imagepost.save().then(function () {
-        return user.addImagePost(imagepost._id).then(function () {
-          return res.json({ imagepost: imagepost.toJSONFor(user) })
-        })
+  // stream.on('finish', () => {
+  //   console.log('HERE0');
+  // console.log(`https://storage.googleapis.com/${bucket.name}/${blob.name}`)
+  streamOne.on('finish', () => {  
+    console.log('HERE1')
+    streamTwo.on('finish', () => {
+      console.log('HERE2')
+      streamThree.on('finish', () => {
+        console.log('HERE3')
+        User.findById(req.payload.id)
+          .then(function (user) {
+            if (!user) {
+              return res.sendStatus(401)
+            }
+            var imagepost = new ImagePost({
+              filename: `https://storage.googleapis.com/${bucket.name}/${blobThree.name}`,
+              filenamesPL: [
+                `https://storage.googleapis.com/${bucket.name}/${blobOne.name}`,
+                `https://storage.googleapis.com/${bucket.name}/${blobTwo.name}`,
+                `https://storage.googleapis.com/${bucket.name}/${blobThree.name}`
+              ],
+              description: req.body.description,
+              location: req.body.location,
+              tagList: req.body.tags
+            })
+            imagepost.author = user
+
+            return imagepost.save().then(function () {
+              return user.addImagePost(imagepost._id).then(function () {
+                console.log(imagepost.toJSONFor(user))
+                return res.json({ imagepost: imagepost.toJSONFor(user) })
+              })
+            })
+          })
+          .catch(next)
       })
+      // })
     })
-    .catch(next)
   })
 
-  stream.end(req.file.buffer);
+  // stream.end(req.files[0].buffer)
+  streamOne.end(req.files[1].buffer)
+  streamTwo.end(req.files[2].buffer)
+  streamThree.end(req.files[3].buffer)
+
   // Ends here
   // User.findById(req.payload.id)
   //   .then(function (user) {
