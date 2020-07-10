@@ -233,7 +233,9 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
     console.log('ERR3')
     next(err)
   })
-
+  streamOne.on('data', (chunk) =>{
+    console.log(chunk);
+  })
   // stream.on('finish', () => {
   //   console.log('HERE0');
   // console.log(`https://storage.googleapis.com/${bucket.name}/${blob.name}`)

@@ -8,6 +8,24 @@ var auth = require('../auth')
 var path = require('path')
 const mime = require('mime-types')
 var config = require('./../../config')
+
+const fileFilter = (req, file, cb) => {
+  // Reject a file 
+  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' ||file.mimetype==='image/jpg') {
+      cb(null, true);
+  } else {
+      cb(null, false);
+  }
+};
+
+var uploadHandler = multer({ 
+  storage: multer.memoryStorage(), 
+  limits: {
+      fileSize: 1024 * 1024 * 1
+  },
+  fileFilter: fileFilter
+});
+
 const { Storage } = require('@google-cloud/storage')
 const storage = new Storage({
   projectId: config.google.projectId,
@@ -58,42 +76,36 @@ router.get('/user', auth.required, function (req, res, next) {
     .catch(next)
 })
 
-router.put('/user', auth.required, multer().single('image'), function (
-  req,
-  res,
-  next
-) {
-  console.log(req.file)
+router.put('/user', auth.required, uploadHandler.any(), function (req, res, next) {
+  console.log(req.files)
 
-  const type = req.file.mimetype
+  const type = req.files[0].mimetype;
   const bucket = storage.bucket('images-photoappbucket')
   // console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0])
   const blob = bucket.file(`${uuid.v4()}.${mime.extensions[type][0]}`)
- 
+
   const stream = blob.createWriteStream({
     resumable: true,
     contentType: type,
-    predefinedAcl: 'publicRead'
+    // predefinedAcl: 'publicRead'
   })
   console.log('HEWRWESAD')
-  User.findById(req.payload.id)
-  .then(function (user) {
-    console.log(user._doc);
-  });
+  // console.log(stream)
   stream.on('error', err => {
     console.log('Error')
     next(err)
   })
-  stream.on('data', data => {
-    console.log(data)
+  
+  stream.on('data', (chunk) =>{
+    console.log(chunk);
   })
   stream.on('finish', () => {
+    console.log('done');
     console.log(`https://storage.googleapis.com/${bucket.name}/${blob.name}`)
-   
 
     User.findById(req.payload.id)
       .then(function (user) {
-        console.log(user._doc);
+        console.log(user._doc)
         if (!user) {
           return res.sendStatus(401)
         }
@@ -125,7 +137,10 @@ router.put('/user', auth.required, multer().single('image'), function (
         })
       })
       .catch(next)
+    console.log(blob.name);
+    
   })
+  stream.end(req.files[0].buffer)
 })
 
 router.post('/users/login', function (req, res, next) {
