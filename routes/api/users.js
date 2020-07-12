@@ -76,10 +76,10 @@ router.get('/user', auth.required, function (req, res, next) {
     .catch(next)
 })
 
-router.put('/user', auth.required, uploadHandler.any(), function (req, res, next) {
-  console.log(req.files)
+router.put('/user', auth.required, uploadHandler.single('image'), function (req, res, next) {
+  // console.log(req.files)
 
-  const type = req.files[0].mimetype;
+  const type = req.file.mimetype;
   const bucket = storage.bucket('images-photoappbucket')
   // console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0])
   const blob = bucket.file(`${uuid.v4()}.${mime.extensions[type][0]}`)
@@ -89,7 +89,7 @@ router.put('/user', auth.required, uploadHandler.any(), function (req, res, next
     contentType: type,
     // predefinedAcl: 'publicRead'
   })
-  console.log('HEWRWESAD')
+  // console.log('HEWRWESAD')
   // console.log(stream)
   stream.on('error', err => {
     console.log('Error')
@@ -133,6 +133,8 @@ router.put('/user', auth.required, uploadHandler.any(), function (req, res, next
         }
 
         return user.save().then(function () {
+
+          console.log(user._doc)
           return res.json({ user: user.toAuthJSON() })
         })
       })
@@ -140,7 +142,7 @@ router.put('/user', auth.required, uploadHandler.any(), function (req, res, next
     console.log(blob.name);
     
   })
-  stream.end(req.files[0].buffer)
+  stream.end(req.file.buffer)
 })
 
 router.post('/users/login', function (req, res, next) {
