@@ -197,7 +197,7 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
   const isImage = req.body.isImage
   if (isImage == 0) {
     const type = req.files[0].mimetype;
-    console.log(req.files[0], type);
+    // console.log(req.files[0], type);
     const blob = bucket.file(`${uuid.v4()}.${mime.extensions[type][0]}`)
     const stream = blob.createWriteStream({
       resumable: true,
@@ -209,14 +209,14 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
       next(err)
     })
     stream.on('finish', () => {
-      console.log('HERE1')
+      console.log('HEREV')
       User.findById(req.payload.id)
       .then(function (user) {
         if (!user) {
           return res.sendStatus(401)
         }
         var imagepost = new ImagePost({
-          filename: `https://storage.googleapis.com/${bucket.name}/${blobThree.name}`,
+          filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
           
 
           description: req.body.description,
@@ -225,16 +225,16 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
           isImage: +req.body.isImage
         })
         imagepost.author = user
-
-        // return imagepost.save().then(function () {
-        //   return user.addImagePost(imagepost._id).then(function () {
-        //     console.log(imagepost.toJSONFor(user))
-        //     return res.json({ imagepost: imagepost.toJSONFor(user) })
-        //   })
-        // })
+        // console.log(imagepost);
+        return imagepost.save().then(function () {
+          return user.addImagePost(imagepost._id).then(function () {
+            console.log(imagepost.toJSONFor(user))
+            return res.json({ imagepost: imagepost.toJSONFor(user) })
+          })
+        })
       })
       .catch(next)
-    }
+    })
     stream.end(req.files[0].buffer)
   } else {
     const typeOne = req.files[1].mimetype
@@ -310,13 +310,13 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
                 isImage: +req.body.isImage
               })
               imagepost.author = user
-
-              // return imagepost.save().then(function () {
-              //   return user.addImagePost(imagepost._id).then(function () {
-              //     console.log(imagepost.toJSONFor(user))
-              //     return res.json({ imagepost: imagepost.toJSONFor(user) })
-              //   })
-              // })
+              // console.log(imagepost)
+              return imagepost.save().then(function () {
+                return user.addImagePost(imagepost._id).then(function () {
+                  console.log(imagepost.toJSONFor(user))
+                  return res.json({ imagepost: imagepost.toJSONFor(user) })
+                })
+              })
             })
             .catch(next)
         })

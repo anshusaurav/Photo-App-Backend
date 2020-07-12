@@ -59,6 +59,7 @@ ImagePostSchema.methods.toJSONFor = function (user) {
     location: this.location,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,
+    isImage: this.isImage,
     tagList: this.tagList,
     favorited: user ? user.isFavorite(this._id) : false,
     favoritesCount: this.favoritesCount,
