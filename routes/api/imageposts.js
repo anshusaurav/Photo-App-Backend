@@ -200,10 +200,11 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
   if (isImage == 0) {
     const type = req.files[0].mimetype;
     // await genThumbnail(req.files[0], 'output/file/path.png', '600x600')
-    genThumbnail(req.files[0], 'output/file/path.png', '250x?')
-    .then(() => console.log('done!'))
+    // let file = new File();
+    
     // console.log(req.files[0], type);
-    const blob = bucket.file(`${uuid.v4()}.${mime.extensions[type][0]}`)
+    const blobname = `${uuid.v4()}`;
+    const blob = bucket.file(`${blobname}.${mime.extensions[type][0]}`)
     const stream = blob.createWriteStream({
       resumable: true,
       contentType: type
@@ -214,32 +215,40 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
       next(err)
     })
     stream.on('finish', () => {
-      console.log('HEREV')
-      User.findById(req.payload.id)
-      .then(function (user) {
-        if (!user) {
-          return res.sendStatus(401)
-        }
+      console.log('HEREV');
 
-        var imagepost = new ImagePost({
-          filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
-          
-
-          description: req.body.description,
-          location: req.body.location,
-          tagList: req.body.tags,
-          isImage: Number(req.body.isImage)
+      // genThumbnail(`https://storage.googleapis.com/${bucket.name}/${blob.name}, 'thumb.png', '250x?')
+      //   .then(() => console.log('done!'))
+      genThumbnail(`https://storage.googleapis.com/${bucket.name}/${blob.name}`, `public/thumbnails/thumb-${blobname}.png`, '250x?')
+      .then(function() {
+          User.findById(req.payload.id)
+          .then(function (user) {
+            if (!user) {
+              return res.sendStatus(401)
+            }
+            var imagepost = new ImagePost({
+              filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
+              description: req.body.description,
+              location: req.body.location,
+              tagList: req.body.tags,
+              isImage: Number(req.body.isImage)
+            })
+            imagepost.author = user;
+            
+            
+    
+            
+            
+            // console.log(imagepost);
+            // return imagepost.save().then(function () {
+            //   return user.addImagePost(imagepost._id).then(function () {
+            //     console.log(imagepost.toJSONFor(user))
+            //     return res.json({ imagepost: imagepost.toJSONFor(user) })
+            //   })
+            // })
+          })
         })
-        imagepost.author = user;
-        
-        // console.log(imagepost);
-        // return imagepost.save().then(function () {
-        //   return user.addImagePost(imagepost._id).then(function () {
-        //     console.log(imagepost.toJSONFor(user))
-        //     return res.json({ imagepost: imagepost.toJSONFor(user) })
-        //   })
-        // })
-      })
+      
       .catch(next)
     })
     stream.end(req.files[0].buffer)
