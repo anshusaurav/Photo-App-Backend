@@ -6,6 +6,8 @@ var Comment = mongoose.model('Comment')
 var User = mongoose.model('User')
 var auth = require('../auth')
 var path = require('path')
+var fs = require('fs');
+const genThumbnail = require('simple-thumbnail')
 const mime = require('mime-types')
 const uuid = require('uuid')
 var config = require('./../../config')
@@ -197,6 +199,9 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
   const isImage = req.body.isImage
   if (isImage == 0) {
     const type = req.files[0].mimetype;
+    // await genThumbnail(req.files[0], 'output/file/path.png', '600x600')
+    genThumbnail(req.files[0], 'output/file/path.png', '250x?')
+    .then(() => console.log('done!'))
     // console.log(req.files[0], type);
     const blob = bucket.file(`${uuid.v4()}.${mime.extensions[type][0]}`)
     const stream = blob.createWriteStream({
@@ -215,6 +220,7 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
         if (!user) {
           return res.sendStatus(401)
         }
+
         var imagepost = new ImagePost({
           filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
           
@@ -222,16 +228,17 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
           description: req.body.description,
           location: req.body.location,
           tagList: req.body.tags,
-          isImage: +req.body.isImage
+          isImage: Number(req.body.isImage)
         })
-        imagepost.author = user
+        imagepost.author = user;
+        
         // console.log(imagepost);
-        return imagepost.save().then(function () {
-          return user.addImagePost(imagepost._id).then(function () {
-            console.log(imagepost.toJSONFor(user))
-            return res.json({ imagepost: imagepost.toJSONFor(user) })
-          })
-        })
+        // return imagepost.save().then(function () {
+        //   return user.addImagePost(imagepost._id).then(function () {
+        //     console.log(imagepost.toJSONFor(user))
+        //     return res.json({ imagepost: imagepost.toJSONFor(user) })
+        //   })
+        // })
       })
       .catch(next)
     })
@@ -311,12 +318,12 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
               })
               imagepost.author = user
               // console.log(imagepost)
-              return imagepost.save().then(function () {
-                return user.addImagePost(imagepost._id).then(function () {
-                  console.log(imagepost.toJSONFor(user))
-                  return res.json({ imagepost: imagepost.toJSONFor(user) })
-                })
-              })
+              // return imagepost.save().then(function () {
+              //   return user.addImagePost(imagepost._id).then(function () {
+              //     console.log(imagepost.toJSONFor(user))
+              //     return res.json({ imagepost: imagepost.toJSONFor(user) })
+              //   })
+              // })
             })
             .catch(next)
         })
