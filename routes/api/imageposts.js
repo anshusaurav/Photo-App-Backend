@@ -6,10 +6,12 @@ var Comment = mongoose.model('Comment')
 var User = mongoose.model('User')
 var auth = require('../auth')
 var path = require('path')
-var fs = require('fs');
+var fs = require('fs')
 const genThumbnail = require('simple-thumbnail')
+const FastAverageColor = require('fast-average-color')
 const mime = require('mime-types')
 const uuid = require('uuid')
+const getColors = require('get-image-colors')
 var config = require('./../../config')
 const { Storage } = require('@google-cloud/storage')
 const storage = new Storage({
@@ -138,7 +140,7 @@ router.get('/feed', auth.required, function (req, res, next) {
       .then(function (results) {
         var imageposts = results[0]
         var imagepostCount = results[1]
-
+        console.log(imageposts)
         return res.json({
           imageposts: imageposts.map(function (imagepost) {
             return imagepost.toJSONFor(user)
@@ -152,28 +154,14 @@ router.get('/feed', auth.required, function (req, res, next) {
 
 router.post('/', auth.required, multer().any(), function (req, res, next) {
   const files = req.files
-  // if(files) {
-  //   files.forEach(file =>console.log(file));
-  // }
-
-  // const type = req.files[0].mimetype
+  var fac = new FastAverageColor();
   const bucket = storage.bucket('images-photoappbucket')
-  // console.log('filename: ' + uuid.v4(), '.', mime.extensions[type][0])
-  // const blob = bucket.file(`${uuid.v4()}.${mime.extensions[type][0]}`)
-  // const stream = blob.createWriteStream({
-  //   resumable: true,
-  //   contentType: type
-  //   // predefinedAcl: 'publicRead'
-  // })
-  console.log(req.body);
+  console.log(req.body)
   const isImage = req.body.isImage
   if (isImage == 0) {
-    const type = req.files[0].mimetype;
-    // await genThumbnail(req.files[0], 'output/file/path.png', '600x600')
-    // let file = new File();
-    
-    // console.log(req.files[0], type);
-    const blobname = `${uuid.v4()}`;
+    const type = req.files[0].mimetype
+    let bgColor;
+    const blobname = `${uuid.v4()}`
     const blob = bucket.file(`${blobname}.${mime.extensions[type][0]}`)
     const stream = blob.createWriteStream({
       resumable: true,
@@ -185,73 +173,70 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
       next(err)
     })
     stream.on('finish', () => {
-      console.log('HEREV');
-
-      // genThumbnail(`https://storage.googleapis.com/${bucket.name}/${blob.name}, 'thumb.png', '250x?')
-      //   .then(() => console.log('done!'))
-      genThumbnail(`https://storage.googleapis.com/${bucket.name}/${blob.name}`, `public/thumbnails/thumb-${blobname}.png`, '600x?')
-      .then(function() {
-          const fileOnePath = path.resolve(`public/thumbnails/thumb-${blobname}.png`);
-          // console.log(fileOne);
+      console.log('HEREV')
+      genThumbnail(
+        `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
+        `public/thumbnails/thumb-${blobname}.png`,
+        '600x?'
+      )
+        .then(function () {
+          const fileOnePath = path.resolve(
+            `public/thumbnails/thumb-${blobname}.png`
+          )
           if (fs.statSync(fileOnePath)) {
-            var bitmap = fs.readFileSync(fileOnePath);
-            var bufferImage = new Buffer.from(bitmap);
-            const typeOne =mime.lookup(fileOnePath);
-            console.log(typeOne);
-            console.log(bitmap); 
-            const blobOne = bucket.file(`thumb-${blobname}.png`);
+            var bitmap = fs.readFileSync(fileOnePath)
+            // var color = fac.getColor(bitmap);
+            // console.log(color);
+            var bufferImage = new Buffer.from(bitmap)
+            const typeOne = mime.lookup(fileOnePath)
+            console.log(typeOne)
+            console.log(bitmap)
+            const blobOne = bucket.file(`thumb-${blobname}.png`)
             const streamOne = blobOne.createWriteStream({
               resumable: true,
               contentType: typeOne
             })
-            streamOne.on('error', err =>{
-              console.log(ERRT);
-              next(err);
+            streamOne.on('error', err => {
+              console.log('ERRT')
+              next(err)
             })
-            streamOne.on('finish',()=>{
-              console.log('HERET');
-        User.findById(req.payload.id)
-          .then(function (user) {
-            if (!user) {
-              return res.sendStatus(401)
-            }
-            var imagepost = new ImagePost({
-              filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
-              filenamesPL: [`https://storage.googleapis.com/${bucket.name}/thumb-${blobname}.png`],
-              description: req.body.description,
-              location: req.body.location,
-              tagList: req.body.tags,
-              isImage: Number(req.body.isImage)
-            })
-            imagepost.author = user;
-            
-            
-    
-            
-            
-            console.log(imagepost._doc);
-            return imagepost.save().then(function () {
-              return user.addImagePost(imagepost._id).then(function () {
-                console.log(imagepost.toJSONFor(user))
-                return res.json({ imagepost: imagepost.toJSONFor(user) })
+            streamOne.on('finish', () => {
+              console.log('HERET')
+
+              User.findById(req.payload.id).then(function (user) {
+                if (!user) {
+                  return res.sendStatus(401)
+                }
+                getColors(`https://storage.googleapis.com/${bucket.name}/${blobOne.name}`).then(colors => {
+                  bgColor = colors[0];
+                var imagepost = new ImagePost({
+                  filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
+                  filenamesPL: [
+                    `https://storage.googleapis.com/${bucket.name}/thumb-${blobname}.png`
+                  ],
+                  description: req.body.description,
+                  location: req.body.location,
+                  tagList: req.body.tags,
+                  isImage: Number(req.body.isImage),
+                  // bgColor: color.rgb
+                })
+                imagepost.author = user
+
+                console.log(imagepost._doc)
+                return imagepost.save().then(function () {
+                  return user.addImagePost(imagepost._id).then(function () {
+                    console.log(imagepost.toJSONFor(user))
+                    return res.json({ imagepost: imagepost.toJSONFor(user) })
+                  })
+                })
+                })
               })
             })
-          })
-            })
             streamOne.end(bufferImage)
-            // Magic = mmm.Magic;
-            // var magic = new Magic(mmm.MAGIC_MIME_TYPE);
-            // magic.detectFile(fileOnePath, function(err, result) {
-            //      if (err) throw err;
-            //      datas = [{"buffer": bufferImage, "mimetype": result, "originalname": path.basename(imagePath)}];
-            //      var JsonDatas= JSON.parse(JSON.stringify(datas));
-            //      log.notice(JsonDatas);
-            // });
           }
-          
         })
-      
-      .catch(next)
+
+        .catch(next)
     })
     stream.end(req.files[0].buffer)
   } else {
@@ -297,7 +282,7 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
       console.log('ERR3')
       next(err)
     })
-   
+
     // stream.on('finish', () => {
     //   console.log('HERE0');
     // console.log(`https://storage.googleapis.com/${bucket.name}/${blob.name}`)
@@ -312,27 +297,33 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
               if (!user) {
                 return res.sendStatus(401)
               }
-              var imagepost = new ImagePost({
-                filename: `https://storage.googleapis.com/${bucket.name}/${blobThree.name}`,
-                filenamesPL: [
-                  `https://storage.googleapis.com/${bucket.name}/${blobOne.name}`,
-                  `https://storage.googleapis.com/${bucket.name}/${blobTwo.name}`,
-                  `https://storage.googleapis.com/${bucket.name}/${blobThree.name}`
-                ],
-
-                description: req.body.description,
-                location: req.body.location,
-                tagList: req.body.tags,
-                isImage: +req.body.isImage
-              })
-              imagepost.author = user
-              console.log(imagepost)
-              return imagepost.save().then(function () {
-                return user.addImagePost(imagepost._id).then(function () {
-                  console.log(imagepost.toJSONFor(user))
-                  return res.json({ imagepost: imagepost.toJSONFor(user) })
+              getColors(`https://storage.googleapis.com/${bucket.name}/${blobOne.name}`).then(colors => {
+                bgColor = colors[0];
+                var imagepost = new ImagePost({
+                  filename: `https://storage.googleapis.com/${bucket.name}/${blobThree.name}`,
+                  filenamesPL: [
+                    `https://storage.googleapis.com/${bucket.name}/${blobOne.name}`,
+                    `https://storage.googleapis.com/${bucket.name}/${blobTwo.name}`,
+                    `https://storage.googleapis.com/${bucket.name}/${blobThree.name}`
+                  ],
+                  // bgColor: color.rgb,
+                  description: req.body.description,
+                  location: req.body.location,
+                  tagList: req.body.tags,
+                  isImage: +req.body.isImage,
+                  bgColor: bgColor
                 })
+                imagepost.author = user
+                // console.log(imagepost)
+                return imagepost.save().then(function () {
+                  return user.addImagePost(imagepost._id).then(function () {
+                    console.log(imagepost.toJSONFor(user))
+                    return res.json({ imagepost: imagepost.toJSONFor(user) })
+                  })
+                })
+                
               })
+              
             })
             .catch(next)
         })

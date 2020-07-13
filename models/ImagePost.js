@@ -14,7 +14,8 @@ var ImagePostSchema = new mongoose.Schema(
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
     tagList: [{ type: String }],
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    isImage: { type: Number, default: 1 }
+    isImage: { type: Number, default: 1 },
+    bgColor: {type: String, default: 'black'}
   },
   { timestamps: true }
 )
@@ -65,6 +66,7 @@ ImagePostSchema.methods.toJSONFor = function (user) {
     favoritesCount: this.favoritesCount,
     commentsCount: this.comments.length,
     filenamesPL: this.filenamesPL,
+    bgColor: this.bgColor,
     author: this.author.toProfileJSONFor(user)
   }
 }
