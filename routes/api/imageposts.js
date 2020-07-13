@@ -20,36 +20,6 @@ const storage = new Storage({
   )
 })
 
-// require('./../../bookstoreapp-279005-0a4ab776114f.json')
-
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, './public/uploads/')
-//   },
-//   filename: (req, file, cb) => {
-//     const fileName = file.originalname
-//       .toLowerCase()
-//       .split(' ')
-//       .join('-')
-//     cb(null, uuid.v4().toString() + '_' + fileName)
-//   }
-// })
-
-// var upload = multer({
-//   storage: storage,
-//   fileFilter: (req, file, cb) => {
-//     if (
-//       file.mimetype == 'image/png' ||
-//       file.mimetype == 'image/jpg' ||
-//       file.mimetype == 'image/jpeg'
-//     ) {
-//       cb(null, true)
-//     } else {
-//       cb(null, false)
-//       return cb(new Error('Only .png, .jpg and .jpeg format allowed!'))
-//     }
-//   }
-// })
 // Preload imagepost objects on routes with ':p'
 router.param('p', function (req, res, next, slug) {
   ImagePost.findOne({ slug: slug })
@@ -225,27 +195,29 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
           // console.log(fileOne);
           if (fs.statSync(fileOnePath)) {
             var bitmap = fs.readFileSync(fileOnePath);
-            var bufferImage = new Buffer(bitmap);
-            const typeOne =bitmap.type;
+            var bufferImage = new Buffer.from(bitmap);
+            const typeOne =mime.lookup(fileOnePath);
             console.log(typeOne);
-            console.log(botmap);
-            console.log()
-            // Magic = mmm.Magic;
-            // var magic = new Magic(mmm.MAGIC_MIME_TYPE);
-            // magic.detectFile(fileOnePath, function(err, result) {
-            //      if (err) throw err;
-            //      datas = [{"buffer": bufferImage, "mimetype": result, "originalname": path.basename(imagePath)}];
-            //      var JsonDatas= JSON.parse(JSON.stringify(datas));
-            //      log.notice(JsonDatas);
-            // });
-          }
-          User.findById(req.payload.id)
+            console.log(bitmap); 
+            const blobOne = bucket.file(`thumb-${blobname}.png`);
+            const streamOne = blobOne.createWriteStream({
+              resumable: true,
+              contentType: typeOne
+            })
+            streamOne.on('error', err =>{
+              console.log(ERRT);
+              next(err);
+            })
+            streamOne.on('finish',()=>{
+              console.log('HERET');
+        User.findById(req.payload.id)
           .then(function (user) {
             if (!user) {
               return res.sendStatus(401)
             }
             var imagepost = new ImagePost({
               filename: `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
+              filenamesPL: [`https://storage.googleapis.com/${bucket.name}/thumb-${blobname}.png`],
               description: req.body.description,
               location: req.body.location,
               tagList: req.body.tags,
@@ -257,14 +229,26 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
     
             
             
-            // console.log(imagepost);
-            // return imagepost.save().then(function () {
-            //   return user.addImagePost(imagepost._id).then(function () {
-            //     console.log(imagepost.toJSONFor(user))
-            //     return res.json({ imagepost: imagepost.toJSONFor(user) })
-            //   })
-            // })
+            console.log(imagepost._doc);
+            return imagepost.save().then(function () {
+              return user.addImagePost(imagepost._id).then(function () {
+                console.log(imagepost.toJSONFor(user))
+                return res.json({ imagepost: imagepost.toJSONFor(user) })
+              })
+            })
           })
+            })
+            streamOne.end(bufferImage)
+            // Magic = mmm.Magic;
+            // var magic = new Magic(mmm.MAGIC_MIME_TYPE);
+            // magic.detectFile(fileOnePath, function(err, result) {
+            //      if (err) throw err;
+            //      datas = [{"buffer": bufferImage, "mimetype": result, "originalname": path.basename(imagePath)}];
+            //      var JsonDatas= JSON.parse(JSON.stringify(datas));
+            //      log.notice(JsonDatas);
+            // });
+          }
+          
         })
       
       .catch(next)
@@ -313,9 +297,7 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
       console.log('ERR3')
       next(err)
     })
-    streamOne.on('data', chunk => {
-      console.log(chunk)
-    })
+   
     // stream.on('finish', () => {
     //   console.log('HERE0');
     // console.log(`https://storage.googleapis.com/${bucket.name}/${blob.name}`)
@@ -344,13 +326,13 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
                 isImage: +req.body.isImage
               })
               imagepost.author = user
-              // console.log(imagepost)
-              // return imagepost.save().then(function () {
-              //   return user.addImagePost(imagepost._id).then(function () {
-              //     console.log(imagepost.toJSONFor(user))
-              //     return res.json({ imagepost: imagepost.toJSONFor(user) })
-              //   })
-              // })
+              console.log(imagepost)
+              return imagepost.save().then(function () {
+                return user.addImagePost(imagepost._id).then(function () {
+                  console.log(imagepost.toJSONFor(user))
+                  return res.json({ imagepost: imagepost.toJSONFor(user) })
+                })
+              })
             })
             .catch(next)
         })
