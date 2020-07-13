@@ -219,8 +219,26 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
 
       // genThumbnail(`https://storage.googleapis.com/${bucket.name}/${blob.name}, 'thumb.png', '250x?')
       //   .then(() => console.log('done!'))
-      genThumbnail(`https://storage.googleapis.com/${bucket.name}/${blob.name}`, `public/thumbnails/thumb-${blobname}.png`, '250x?')
+      genThumbnail(`https://storage.googleapis.com/${bucket.name}/${blob.name}`, `public/thumbnails/thumb-${blobname}.png`, '600x?')
       .then(function() {
+          const fileOnePath = path.resolve(`public/thumbnails/thumb-${blobname}.png`);
+          // console.log(fileOne);
+          if (fs.statSync(fileOnePath)) {
+            var bitmap = fs.readFileSync(fileOnePath);
+            var bufferImage = new Buffer(bitmap);
+            const typeOne =bitmap.type;
+            console.log(typeOne);
+            console.log(botmap);
+            console.log()
+            // Magic = mmm.Magic;
+            // var magic = new Magic(mmm.MAGIC_MIME_TYPE);
+            // magic.detectFile(fileOnePath, function(err, result) {
+            //      if (err) throw err;
+            //      datas = [{"buffer": bufferImage, "mimetype": result, "originalname": path.basename(imagePath)}];
+            //      var JsonDatas= JSON.parse(JSON.stringify(datas));
+            //      log.notice(JsonDatas);
+            // });
+          }
           User.findById(req.payload.id)
           .then(function (user) {
             if (!user) {
