@@ -160,5 +160,5 @@ UserSchema.methods.isFollowing = function (id) {
     return followId.toString() === id.toString()
   })
 }
-
+UserSchema.index({username: "text", fullname: "text"});
 mongoose.model('User', UserSchema)
