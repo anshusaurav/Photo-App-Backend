@@ -177,7 +177,7 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
       genThumbnail(
         `https://storage.googleapis.com/${bucket.name}/${blob.name}`,
         `public/thumbnails/thumb-${blobname}.png`,
-        '600x?'
+        '600x600'
       )
         .then(function () {
           const fileOnePath = path.resolve(
@@ -321,9 +321,9 @@ router.post('/', auth.required, multer().any(), function (req, res, next) {
                     return res.json({ imagepost: imagepost.toJSONFor(user) })
                   })
                 })
-                
+
               })
-              
+
             })
             .catch(next)
         })
@@ -508,32 +508,6 @@ router.get('/:slug/comments', auth.optional, function (req, res, next) {
     .catch(next)
 })
 
-/*
-
-.populate({
-          path: 'comments',
-          populate: {
-            path: 'author'
-          },
-          options: {
-            sort: {
-              createdAt: 'desc'
-            }
-          }
-        })
-        .execPopulate()
-        .then(function (article) {
-          return res.json({
-            comments: req.imagepost.comments.map(function (comment) {
-              return comment.toJSONFor(user)
-            })
-          })
-        })
-    })
-    .catch(next)
-})
-
-*/
 // create a new comment
 router.post('/:slug/comments', auth.required, function (req, res, next) {
   const slug = req.params.slug
