@@ -2,12 +2,15 @@ var router = require('express').Router();
 var mongoose = require('mongoose');
 var ImagePost = mongoose.model('ImagePost');
 var User = mongoose.model('User');
-
+var auth = require('../auth')
 // return a list of tags
 
-router.post('/', async(req, res, next) =>{
+router.post('/', auth.optional, async(req, res, next) =>{
+    // console.log('here');
+    // console.log(req.body);
     var query = req.body.searchQuery;
-    console.log(query);
+    console.log('query: ',query);
+    // console.log(query);
     User.find(
         { $text : { $search : query } }, 
         { score : { $meta: "textScore" } }
@@ -17,7 +20,7 @@ router.post('/', async(req, res, next) =>{
         if(users) {
             console.log(users);
             return res.json({users: users.map(function(user){
-                return user.toJSONFor(false)
+                return user.toProfileJSONFor(false)
             }),
             userCount: users.length
             })
