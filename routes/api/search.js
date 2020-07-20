@@ -14,12 +14,17 @@ router.post('/', async(req, res, next) =>{
     )
     .sort({ score : { $meta : 'textScore' } })
     .exec(function(err, users) {
-        console.log(users);
-        return res.json({users: users.map(function(user){
-            return user.toJSONFor(user)
-        }),
-        userCount: users.length
-        })
+        if(users) {
+            console.log(users);
+            return res.json({users: users.map(function(user){
+                return user.toJSONFor(false)
+            }),
+            userCount: users.length
+            })
+        }
+        else{
+            return res.json({users:[], userCount: 0});
+        }
     });
         
     

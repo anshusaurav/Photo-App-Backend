@@ -4,7 +4,7 @@ router.use('/', require('./users'));
 router.use('/profiles', require('./profiles'));
 router.use('/p', require('./imageposts'));
 router.use('/tags', require('./tags'));
-
+router.use('/search', require('./search'));
 router.use(function(err, req, res, next){
   if(err.name === 'ValidationError'){
     return res.status(422).json({
