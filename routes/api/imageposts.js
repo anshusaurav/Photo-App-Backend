@@ -476,7 +476,7 @@ router.post("/:slug/save", auth.required, function (req, res, next) {
 });
 
 // UnSave an imagepost
-router.delete("/:slug/unsave", auth.required, function (req, res, next) {
+router.delete("/:slug/save", auth.required, function (req, res, next) {
   var slug = req.params.slug;
 
   User.findById(req.payload.id)
@@ -485,22 +485,20 @@ router.delete("/:slug/unsave", auth.required, function (req, res, next) {
         return res.sendStatus(401);
       }
       return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
-        return user.unfavorite(imagepost.id).then(function (user) {
-          return imagepost.updateFavoriteCount().then(function (imagepost) {
-            imagepost
-              .populate({
-                path: "author",
-                options: {
-                  sort: {
-                    createdAt: "desc",
-                  },
+        return user.unSaveImage(imagepost.id).then(function (user) {
+          imagepost
+            .populate({
+              path: "author",
+              options: {
+                sort: {
+                  createdAt: "desc",
                 },
-              })
-              .execPopulate()
-              .then(function (imagepost) {
-                return res.json({ imagepost: imagepost.toJSONFor(user) });
-              });
-          });
+              },
+            })
+            .execPopulate()
+            .then(function (imagepost) {
+              return res.json({ imagepost: imagepost.toJSONFor(user) });
+            });
         });
       });
     })
