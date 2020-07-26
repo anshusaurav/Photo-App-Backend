@@ -445,6 +445,67 @@ router.delete("/:imagepost", auth.required, function (req, res, next) {
   //   })
   //   .catch(next);
 });
+// Save an imagepost
+router.post("/:slug/save", auth.required, function (req, res, next) {
+  var slug = req.params.slug;
+
+  User.findById(req.payload.id)
+    .then(function (user) {
+      if (!user) {
+        return res.sendStatus(401);
+      }
+      return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
+        return user.saveImage(imagepost.id).then(function (user) {
+          imagepost
+            .populate({
+              path: "author",
+              options: {
+                sort: {
+                  createdAt: "desc",
+                },
+              },
+            })
+            .execPopulate()
+            .then(function (imagepost) {
+              return res.json({ imagepost: imagepost.toJSONFor(user) });
+            });
+        });
+      });
+    })
+    .catch(next);
+});
+
+// UnSave an imagepost
+router.delete("/:slug/unsave", auth.required, function (req, res, next) {
+  var slug = req.params.slug;
+
+  User.findById(req.payload.id)
+    .then(function (user) {
+      if (!user) {
+        return res.sendStatus(401);
+      }
+      return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
+        return user.unfavorite(imagepost.id).then(function (user) {
+          return imagepost.updateFavoriteCount().then(function (imagepost) {
+            imagepost
+              .populate({
+                path: "author",
+                options: {
+                  sort: {
+                    createdAt: "desc",
+                  },
+                },
+              })
+              .execPopulate()
+              .then(function (imagepost) {
+                return res.json({ imagepost: imagepost.toJSONFor(user) });
+              });
+          });
+        });
+      });
+    })
+    .catch(next);
+});
 
 // Favorite an imagepost
 router.post("/:slug/favorite", auth.required, function (req, res, next) {
@@ -456,11 +517,8 @@ router.post("/:slug/favorite", auth.required, function (req, res, next) {
         return res.sendStatus(401);
       }
       return ImagePost.findOne({ slug: slug }).then(function (imagepost) {
-        console.log(imagepost._doc);
-
         return user.favorite(imagepost.id).then(function (user) {
           return imagepost.updateFavoriteCount().then(function (imagepost) {
-            // console.log('LIKE')
             imagepost
               .populate({
                 path: "author",

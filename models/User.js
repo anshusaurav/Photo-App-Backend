@@ -32,6 +32,7 @@ var UserSchema = new mongoose.Schema(
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "ImagePost" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     follower: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    savedImages: [{ type: mongoose.Schema.Types.ObjectId, ref: "ImagePost" }],
     hash: String,
     salt: String,
   },
@@ -98,6 +99,7 @@ UserSchema.methods.toProfileJSONFor = function (user) {
     numFollowing: this.following.length,
     numFollowers: this.follower.length,
     numPosts: this.imageposts.length,
+    savedImages: this.savedImages,
   };
 };
 UserSchema.methods.addImagePost = function (id) {
@@ -113,6 +115,21 @@ UserSchema.methods.removeImagePost = function (id) {
   return this.save();
 };
 
+UserSchema.methods.saveImage = function (id) {
+  if (this.savedImages.indexOf(id) === -1) {
+    this.savedImages = this.savedImages.concat([id]);
+  }
+  return this.save();
+};
+UserSchema.methods.unSaveImage = function (id) {
+  this.savedImages.remove(id);
+  return this.save();
+};
+UserSchema.methods.isSaved = function (id) {
+  return this.savedImages.some(function (favoriteId) {
+    return favoriteId.toString() === id.toString();
+  });
+};
 UserSchema.methods.favorite = function (id) {
   if (this.favorites.indexOf(id) === -1) {
     this.favorites = this.favorites.concat([id]);
