@@ -74,10 +74,13 @@ router.get("/", auth.optional, function (req, res, next) {
     req.query.favorited
       ? User.findOne({ username: req.query.favorited })
       : null,
+    req.query.saved ? User.findOne({ username: req.query.saved }) : null
+
   ])
     .then(function (results) {
       var author = results[0];
       var favoriter = results[1];
+      var saved = results[2];
 
       if (author) {
         query.author = author._id;
@@ -89,6 +92,11 @@ router.get("/", auth.optional, function (req, res, next) {
         query._id = { $in: [] };
       }
 
+      if (saved) {
+        query._id = { $in: saved.savedImages };
+      } else if (req.query.saved) {
+        query._id = { $in: [] };
+      }
       return Promise.all([
         ImagePost.find(query)
           .limit(Number(limit))
