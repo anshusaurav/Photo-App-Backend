@@ -8,8 +8,18 @@ router.post("/:username/:slug", auth.required, function (req, res, next) {
     var profileId = req.params.username;
     var slug = req.params.slug;
     console.log(username, slug);
-    return res.json({ 'HEro': 'HRo' })
+    return res.json({ 'HEro': 'HRo' });
+    User.findById(req.payload.id)
+        .then(function (user) {
+            if (!user)
+                return res.sendStatus(401);
+            return User.findOne({ username }).then(function (userM) {
+
+            })
+        })
 
 })
+router.get('/listUsers', auth.required, function (req, res, next) {
 
+})
 module.exports = router;

@@ -33,6 +33,7 @@ var UserSchema = new mongoose.Schema(
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     follower: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     savedImages: [{ type: mongoose.Schema.Types.ObjectId, ref: "ImagePost" }],
+    communicatedProfiles: [{ type: mongoose.Schema.ObjectId, ref: "User" }],
     hash: String,
     salt: String,
   },
@@ -175,6 +176,21 @@ UserSchema.methods.getUnfollowed = function (id) {
 UserSchema.methods.isFollowing = function (id) {
   return this.following.some(function (followId) {
     return followId.toString() === id.toString();
+  });
+};
+UserSchema.methods.communicate = function (id) {
+  if (this.communicatedProfiles.indexOf(id) === -1) {
+    this.communicatedProfiles = this.communicatedProfiles.concat(id);
+  }
+  return this.save();
+};
+UserSchema.methods.unCommunicate = function (id) {
+  this.communicatedProfiles.remove(id);
+  return this.save();
+};
+UserSchema.methods.isCommunicating = function (id) {
+  return this.communicatedProfiles.some(function (commId) {
+    return commId.toString() === id.toString();
   });
 };
 UserSchema.index({ username: "text", fullname: "text" });
