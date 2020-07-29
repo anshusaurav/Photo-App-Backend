@@ -13,7 +13,9 @@ MessageSchema.methods.toJSONFor = function (user) {
         post: this.post,
         sender: this.sender,
         receiver: this.receiver,
+        relevant: this.sender === user._id || this.receiver === user.id,
         createdAt: this.createdAt,
+
     };
 };
 
