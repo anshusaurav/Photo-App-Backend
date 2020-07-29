@@ -47,6 +47,7 @@ if (isProduction) {
 require('./models/User')
 require('./models/ImagePost')
 require('./models/Comment')
+require('./models/Message')
 require('./config/passport')
 
 app.use(require('./routes'))

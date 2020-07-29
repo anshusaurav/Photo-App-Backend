@@ -5,10 +5,12 @@ router.use('/profiles', require('./profiles'));
 router.use('/p', require('./imageposts'));
 router.use('/tags', require('./tags'));
 router.use('/search', require('./search'));
-router.use(function(err, req, res, next){
-  if(err.name === 'ValidationError'){
+router.use('/messages', require('./messages'));
+
+router.use(function (err, req, res, next) {
+  if (err.name === 'ValidationError') {
     return res.status(422).json({
-      errors: Object.keys(err.errors).reduce(function(errors, key){
+      errors: Object.keys(err.errors).reduce(function (errors, key) {
         errors[key] = err.errors[key].message;
 
         return errors;
